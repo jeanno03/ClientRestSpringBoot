@@ -1,6 +1,10 @@
 package com;
 
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,24 +22,36 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.client.RestTemplate;
 
+import csv.MyCsv;
 import jerseydemo.Employee;
 import promartist.MyUserDto;
 //https://howtodoinjava.com/jersey/jersey-rest-security/
 @SpringBootApplication
 public class ClientRestSpringBootApplication {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
         SpringApplication app = new SpringApplication(ClientRestSpringBootApplication.class);
         app.setDefaultProperties(Collections
           .singletonMap("server.port", "8083"));
         app.run(args);
 		System.out.println("******************************************************");
 		System.out.println("app start");
-//		getMyUsersDto();
-//		getMyUserDto();
+		getMyUsersDto();
+		MyUserDto[] myUsersDto = getMyUserDtoMethod2();
+		getMyUserDto();
+		PrintWriter printWriter = new PrintWriter ("/home/jeanno/Bureau/file.csv");
+		MyCsv.writeCities(printWriter, myUsersDto);
+		List<MyUserDto> myUserDtoMist = new ArrayList();
+		for(int i=0;i<myUsersDto.length;i++) {
+			MyUserDto m = new MyUserDto(myUsersDto[i].getId(), myUsersDto[i].getEmail(), myUsersDto[i].getArtistName(),
+					myUsersDto[i].getLastName(), myUsersDto[i].getFirstName());
+			myUserDtoMist.add(m);
+		}
+		
+		MyCsv.writeCsv(myUserDtoMist);
 //		getWithHeader();
-		testBasicAuthentification();
-		getString();
+//		testBasicAuthentification();
+//		getString();
 		System.out.println("app stop");		
 		System.out.println("******************************************************");
 
@@ -48,12 +64,34 @@ public class ClientRestSpringBootApplication {
 	    final String uri = "http://localhost:8080/PromArtisteJEEBack-web/rest/TestController/getMyUserDtoList";
 	    RestTemplate restTemplate = new RestTemplate();
 	     
-	    MyUserDto[] MyUsersDto =  restTemplate.getForObject(uri, MyUserDto[].class);
+	    MyUserDto[] myUsersDto =  restTemplate.getForObject(uri, MyUserDto[].class);
 	    
-	     for(int i=0;i<MyUsersDto.length;i++) {
-	 	    System.out.println(MyUsersDto[i].getEmail());
+	     for(int i=0;i<myUsersDto.length;i++) {
+	 	    System.out.println(myUsersDto[i].getEmail());
 	     }
-	    System.out.println(MyUsersDto);
+	    System.out.println(myUsersDto);
+	}
+	
+	private static MyUserDto[] getMyUserDtoMethod2() {
+		System.out.println("**********getMyUserDtoMethod2 ************ START" );
+		RestTemplate restTemplate = new RestTemplate();	
+		final String uri = "http://localhost:8080/PromArtisteJEEBack-web/rest/TestController/getMyUserDtoList";
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Arrays.asList(new MediaType[] { MediaType.APPLICATION_JSON }));
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.setBasicAuth("howtodoinjava", "password");		
+		HttpEntity<String> entity = new HttpEntity<String> ("parameter", headers);
+		ResponseEntity<MyUserDto[]>respEntity = restTemplate.exchange(uri, HttpMethod.GET, entity, MyUserDto[].class);
+		MyUserDto[] myUsersDto = respEntity.getBody();
+
+	     for(int i=0;i<myUsersDto.length;i++) {
+		 	    System.out.println(myUsersDto[i].getEmail());
+		     }
+		    System.out.println(myUsersDto.toString());
+			System.out.println("**********getMyUserDtoMethod2 ************ END" );
+			
+			return myUsersDto;
 	}
 	
 	private static void getMyUserDto()
